@@ -2,36 +2,41 @@
 
 {% block content %}
 <h1>{{profile.name}}</h1>
-<h2>Ваш рейтинг: {{profile.rating}}</h2>
-<h3> Примеры которые вы решали</h3>
+<h2>Рейтинг: {{profile.rating}}</h2>
+<h3> Примеры, которые вы решали</h3>
 {% if examples %}
 <table class="table table-striped table-hover">
     <thead>
         <tr>
-            <th scope="col">example</th>
-            <th scope="col">hardness</th>
-            <th scope="col">status</th>
-            <th scope="col">date</th>
+            <th scope="col">Пример</th>
+            <th scope="col">Сложность</th>
+            <th scope="col">Статус</th>
+            <th scope="col">Дата</th>
         </tr>
     </thead>
     <tbody>
         {% for ex in examples %}
-        <tr>
-            <th>{{ex.example}}</th>
-            <th>{{ex.hardness}}</th>
-            {% if ex.status %}
-                <th class="bg-succes">ok</th>       
-            {% else %}
-                <th class="bg-danger">failed</th>     
-            {% endif %}
-            <th>{{ ex.date }}</th>
+        {% if ex.status %}
+        <tr class="table-success">
+            <td>{{ex.example}}</td>
+            <td>{{ex.hardness}}</td>
+            <td>ok</td>       
+            <td>{{ ex.date }}</td>
         </tr>
+        {% else %}
+        <tr class="table-danger">
+            <td>{{ex.example}}</td>
+            <td>{{ex.hardness}}</td>
+            <td>failed</td> 
+            <td>{{ ex.date }}</td>
+        </tr>
+        {% endif %}
         {% endfor %}
     </tbody>
 </table>
 {% else %}
 <p>
-    Похоже что вы еще не решили ни одного примера.
+    Похоже, что вы еще не решили ни одного примера.
 </p>
 {% endif %}
 <div>

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
+    return db_sess.query(User).filter(User.id == user_id).first()
 
 @app.route("/signup", methods=['GET', 'POST'])
 def signup():
@@ -47,6 +47,20 @@ def signup():
         db_sess.commit()
         return redirect('/login')
     return render_template('signup.html', title='Signing Up', form=form)
+
+@app.route("/rating")
+def rating():
+    db_sess = db_session.create_session()
+    users = db_sess.query(User.name, User.rating).all()
+    users.sort(key=lambda x: x[1], reverse=True)
+    final = []
+    curr = None
+    for i, user in enumerate(users, start=1):
+        final.append([i] + list(user))
+        if current_user.is_authenticated and user[0] == current_user.name:
+            curr = [i] + list(user)
+            
+    return render_template("rating.html", title="Рейтинг", rate=final, curr=curr)
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -95,8 +109,8 @@ def logout():
 def profile(name):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.name == name).first()
-    examples = db_sess.query(Examples).filter(Examples.user_id == user.id).all()
-    logger.debug(examples)
+    examples = db_sess.query(Examples).filter(Examples.user_id == user.id).all()[:20]
+    examples.sort(key=lambda x: x.date, reverse=True)
     return render_template("profile.html", title=user.name, profile=user, examples=examples)
 
 def main():
