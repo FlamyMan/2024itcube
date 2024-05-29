@@ -13,9 +13,11 @@ class User(SqlAlchemyBase, UserMixin):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True, unique=True)
     email = sqlalchemy.Column(sqlalchemy.String, index=True, unique=True, nullable=True)
+    rating = sqlalchemy.Column(sqlalchemy.Float, default=0)
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
 
+    examples = orm.relationship("Examples", back_populates="user")
     def __repr__(self):
         return f'<User> {self.id} {self.name} {self.email}'
 

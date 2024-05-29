@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 
 {% block content %}
-<p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Assumenda minus modi voluptate nemo nobis debitis, aperiam exercitationem sunt porro optio? Quos qui esse quis deserunt eius molestiae inventore soluta illum.</p>
+<form>
+    <p>Ваш пример: {{ example }}</p>
+    {{ form.draft.label }}<br>
+    {{ form.draft(class="form-control") }}<br>
+    <p>{{ form.answer.label }}
+    {{ form.answer(class="form-control") }}<br>
+    {% for error in form.answer.errors %}
+        <div class="alert alert-success" role="alert">
+            {{ error }}
+        </div>
+    {% endfor %}
+    </p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+</form>
 {% endblock %}
