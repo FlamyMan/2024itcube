@@ -1,6 +1,6 @@
 from flask import Flask, render_template, redirect, request, abort
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from generatemath import generate_example
+from generatemath import generate_equation
 app = Flask(__name__)
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -31,13 +31,13 @@ def signup():
     form = RegisterForm()
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
-            return render_template('signup.html', title='Signing Up', form=form,
-                                   message="Passwords are not the same.")
+            return render_template('signup.html', title='Регистрация', form=form,
+                                   message="Пароли не совпадают")
         db_sess = db_session.create_session()
 
         if db_sess.query(User).filter(User.email == form.email.data.lower()).first() or db_sess.query(User).filter(User.name == form.name.data).first():
-            return render_template('signup.html', title='Signing Up', form=form,
-                                   message="The User with this email already exist.")
+            return render_template('signup.html', title='Регистрация', form=form,
+                                   message="Пользователь с такой почтой или именем уже существует")
         user = User(
             name=form.name.data,
             email=form.email.data.lower()
@@ -46,7 +46,7 @@ def signup():
         db_sess.add(user)
         db_sess.commit()
         return redirect('/login')
-    return render_template('signup.html', title='Signing Up', form=form)
+    return render_template('signup.html', title='Регистрация', form=form)
 
 @app.route("/rating")
 def rating():
@@ -73,14 +73,14 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
-        return render_template('login.html', message="Wrong login or password.", form=form)
-    return render_template('login.html', title='Authorisation', form=form)
+        return render_template('login.html', message="Не правильный логин или пароль.", form=form)
+    return render_template('login.html', title='Вход', form=form)
 
 
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/index", methods=['GET', 'POST'])
 def index():
-    example = generate_example(2)
+    example, right = generate_equation(3, 2)
     form = ExampleForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -88,6 +88,7 @@ def index():
     return render_template("index.html", title="Math website", example=example, form=form)
 
 @app.route('/delete')
+@login_required
 def delete():
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.name == current_user.name).first()
@@ -106,9 +107,11 @@ def logout():
     return redirect("/")
 
 @app.route("/profile/<string:name>", methods=['GET', 'POST'])
-def profile(name):
+def profile(name: str):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.name == name).first()
+    if not user:
+        abort(404)
     examples = db_sess.query(Examples).filter(Examples.user_id == user.id).all()[:20]
     examples.sort(key=lambda x: x.date, reverse=True)
     return render_template("profile.html", title=user.name, profile=user, examples=examples)
