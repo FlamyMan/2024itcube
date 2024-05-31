@@ -11,6 +11,7 @@ def generate_equation(radicalAmount: int, featureCount : int, xLimits : tuple = 
     subX : int = x
     radicalList = []
     radicalNum = radicalAmount
+    lastElem = -1
     while (radicalNum > 0):
         coefficient = random.randint(coefLimits[0], coefLimits[1])
         action = random.randint(0, featureCount)
@@ -36,7 +37,7 @@ def generate_equation(radicalAmount: int, featureCount : int, xLimits : tuple = 
                     continue
                 coefficients = []
                 for i in range(coefLimits[0], coefLimits[1]+1):
-                    if i == 0 or i == 1 or i == subX or subX // i < subXLimits[0] or subX // i > subXLimits[1]:
+                    if i == 0 or i == 1 or i == subX or i == lastElem or subX // i < subXLimits[0] or subX // i > subXLimits[1]:
                         continue
                     if (subX % i == 0):
                         coefficients.append(i)
@@ -47,7 +48,7 @@ def generate_equation(radicalAmount: int, featureCount : int, xLimits : tuple = 
                 coefficient = coefficients[diff]
                 subX = int(subX // coefficient)
             case 3: # division
-                if (subX > subXLimits[1] or subX == 0):  # we can't fucking multiply any more m8
+                if (subX > subXLimits[1] or subX == 0 or subX == 1):  # we can't fucking multiply any more m8
                     continue
                 # the coefficient gotta stay below (subXLimits[1] / subX)
                 if (subXLimits[1] / subX == 1 or subXLimits[1] / subX == 0):
@@ -62,21 +63,32 @@ def generate_equation(radicalAmount: int, featureCount : int, xLimits : tuple = 
                     continue
                 subX *= coefficient
             
-        radicalList.append((action, coefficient))
-        
+        radicalList.append((action, coefficient)) 
+        lastElem = coefficient
         radicalNum -= 1
+    
     problemStr = f"{subX}"
     radicalList.reverse()
+    print(radicalList)
+    lastPriority = 10000
     for i in radicalList:
+        order = random.randint(0, 1)
         match i[0]:
             case 0:
-                problemStr = f"{problemStr}+{i[1]}"
+                problemStr = f"{problemStr}+{i[1]}" if order else f"{i[1]}+{problemStr}"
+                lastPriority = 0
             case 1:
                 problemStr = f"{problemStr}-{i[1]}"
+                lastPriority = 0
             case 2:
-                problemStr = f"({problemStr})*{i[1]}"
+                if lastPriority >= 1:
+                    problemStr = f"{problemStr}*{i[1]}" if order else f"{i[1]}*{problemStr}"
+                else:
+                    problemStr = f"({problemStr})*{i[1]}" if order else f"{i[1]}({problemStr})"
+                lastPriority = 1
             case 3:
-                problemStr = f"({problemStr})/{i[1]}"
+                problemStr = f"{problemStr}/{i[1]}" if lastPriority >= 1 else f"({problemStr})/{i[1]}"
+                lastPriority = 1
     
     return problemStr, x
 
