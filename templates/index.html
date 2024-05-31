@@ -1,18 +1,36 @@
 {% extends "base.html" %}
 
+{% from "_formhelpers.html" import render_field %}
+
 {% block content %}
-<form>
-    <p>Ваш пример: {{ example }}</p>
-    {{ form.draft.label }}<br>
-    {{ form.draft(class="form-control") }}<br>
-    <p>{{ form.answer.label }}
-    {{ form.answer(class="form-control") }}<br>
-    {% for error in form.answer.errors %}
-        <div class="alert alert-success" role="alert">
-            {{ error }}
-        </div>
-    {% endfor %}
+
+<form action="" method="post" class="centered">
+    Тип примера: 
+    <select name="type" id="problem_type" class="form-control">
+        <option value="calc">Вычисление</option>
+        <option value="equation">Уравнение</option>
+        <option value="inequality">Неравенство</option>
+    </select>
+    Сложность: 
+    <select name="hardness" id="hard_type" class="form-control">
+        <option value="low">Легкий</option>
+        <option value="mid">Средний</option>
+        <option value="high">Сложный</option>
+    </select>
+    Доп. Параметры:
+    <select name="additional" id="addition" class="form-control">
+        <option value="no">Не выбрано</option>
+    </select>
     </p>
+
+<form action="" method="post" class="centered">
+    <dl>
+    {{ form.hidden_tag() }}
+    <p>Ваш пример: {{ example }}</p>
+    {{ render_field(form.draft, class="form-control") }}
+    {{ render_field(form.answer, class="form-control") }}
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    </dl>
+    <script src="{{ url_for('static', filename='scripts/type_selection.js')}}"></script>
 </form>
 {% endblock %}
