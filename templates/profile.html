@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{profile.name}}</h1>
 <h2>Рейтинг: {{profile.rating}}</h2>
-<h3> Примеры, которые вы решали</h3>
+<h3>Решенные примеры</h3>
 {% if examples %}
 <table class="table table-striped table-hover">
     <thead>
@@ -36,13 +36,15 @@
 </table>
 {% else %}
 <p>
-    Похоже, что вы еще не решили ни одного примера.
+    Похоже, что пользователь еще не решил ни одного примера.
 </p>
 {% endif %}
+{% if current_user.is_authenticated and current_user.name == profile.name %}
 <div>
     <p>
     <a class="btn btn-warning" href="/logout">Выйти из аккаунта</a><br><br>
     <a class="btn btn-danger" href="/delete">Удалить аккаунт</a>
     </p>
 </div>
+{% endif %}
 {% endblock %}
