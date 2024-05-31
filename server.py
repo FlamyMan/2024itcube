@@ -80,7 +80,7 @@ def login():
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/index", methods=['GET', 'POST'])
 def index():
-    example, right = generate_equation(3, 2)
+    example, right = generate_equation(3, 3)
     form = ExampleForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -112,9 +112,9 @@ def profile(name: str):
     user = db_sess.query(User).filter(User.name == name).first()
     if not user:
         abort(404)
-    examples = db_sess.query(Examples).filter(Examples.user_id == user.id).all()[:20]
+    examples = db_sess.query(Examples).filter(Examples.user_id == user.id).all()
     examples.sort(key=lambda x: x.date, reverse=True)
-    return render_template("profile.html", title=user.name, profile=user, examples=examples)
+    return render_template("profile.html", title=user.name, profile=user, examples=examples[:20])
 
 def main():
     db_session.global_init("db/dataBase.db")

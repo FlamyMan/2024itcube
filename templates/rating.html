@@ -35,7 +35,7 @@
         {% for user in rate %}
         <tr>
             <th scope="row">{{ user[0] }}</th>
-            <td>{{ user[1] }}</td>
+            <td><a href="{{ '/profile/%s' % user[1] }}">{{ user[1] }}</a></td>
             <td>{{ user[2] }}</td>
         </tr>
         {% endfor %}
