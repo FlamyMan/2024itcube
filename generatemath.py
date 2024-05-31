@@ -46,6 +46,22 @@ def generate_equation(radicalAmount: int, featureCount : int, xLimits : tuple = 
                 diff = diff.index(min(diff))
                 coefficient = coefficients[diff]
                 subX = int(subX // coefficient)
+            case 3: # division
+                if (subX > subXLimits[1] or subX == 0):  # we can't fucking multiply any more m8
+                    continue
+                # the coefficient gotta stay below (subXLimits[1] / subX)
+                if (subXLimits[1] / subX == 1 or subXLimits[1] / subX == 0):
+                    continue
+                attCount = 0
+                while (coefficient > subXLimits[1] / subX or coefficient == 1 or coefficient == 0 or coefficient == subX):
+                    coefficient = random.randint(subXLimits[0], int(subXLimits[1] / subX))
+                    attCount += 1
+                    if attCount > 20:
+                        break    # fuck this shit
+                if attCount > 20:
+                    continue
+                subX *= coefficient
+            
         radicalList.append((action, coefficient))
         
         radicalNum -= 1
@@ -59,8 +75,10 @@ def generate_equation(radicalAmount: int, featureCount : int, xLimits : tuple = 
                 problemStr = f"{problemStr}-{i[1]}"
             case 2:
                 problemStr = f"({problemStr})*{i[1]}"
+            case 3:
+                problemStr = f"({problemStr})/{i[1]}"
     
     return problemStr, x
 
 if __name__ == "__main__":
-    print(generate_equation(5, 2))
+    print(generate_equation(5, 3))
