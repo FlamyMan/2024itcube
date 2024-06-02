@@ -7,11 +7,13 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 app.secret_key = "my_secret_key"
 
+HARDNESS_TO_VAL = {"low": 0, "mid": 1, "high": 2}
+
 from forms.user import LoginForm, RegisterForm
-from forms.example import ExampleForm
+from forms.example import ProblemForm
 from data import db_session
 from data.users import User
-from data.examples import Examples
+from data.examples import Example
 
 import logging
 logging.basicConfig(
@@ -76,23 +78,41 @@ def login():
         return render_template('login.html', message="Не правильный логин или пароль.", form=form)
     return render_template('login.html', title='Вход', form=form)
 
+def generate_problem_by_settings(problem_type, hardness, additional, user_name: str=""):
+    eq, right = generate_equation(3, 3) # temporarily 
+    db_sess = db_session.create_session()
+    if user_name:
+        user = db_sess.query(User).filter(User.name == user_name).first()
+    Example(
+        user_id = user.id,
+        example = eq,
+        hardness = hardness,
+        right = right
+    )
 
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/index", methods=['GET', 'POST'])
 def index():
-    example, right = generate_equation(3, 3)
-    form = ExampleForm()
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-
-    return render_template("index.html", title="Math website", example=example, form=form)
+    example_id = ""
+    answer_form = ProblemForm()
+    if request.method == "POST":
+        form = request.form.to_dict()
+        print(form)
+        if "problem_type" in form.keys(): # generate
+            if current_user.is_authenticated:
+                example, right = generate_problem_by_settings(form["problem_type"], HARDNESS_TO_VAL[form["hardness"]], form["additional"], user=current_user.name)
+        elif "example_id" in form.keys(): # test problem
+            example = ""
+    else:
+        example, right = generate_equation(3, 3)
+    return render_template("index.html", title="Math website", example=example, problem_form=answer_form)
 
 @app.route('/delete')
 @login_required
 def delete():
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.name == current_user.name).first()
-    examples = db_sess.query(Examples).filter(Examples.user_id == user.id)
+    examples = db_sess.query(Example).filter(Example.user_id == user.id)
     for ex in examples:
         db_sess.delete(ex)
     db_sess.delete(user)
@@ -106,13 +126,13 @@ def logout():
     logout_user()
     return redirect("/")
 
-@app.route("/profile/<string:name>", methods=['GET', 'POST'])
+@app.route("/profile/<string:name>")
 def profile(name: str):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.name == name).first()
     if not user:
         abort(404)
-    examples = db_sess.query(Examples).filter(Examples.user_id == user.id).all()
+    examples = db_sess.query(Example).filter(Example.user_id == user.id).all()
     examples.sort(key=lambda x: x.date, reverse=True)
     return render_template("profile.html", title=user.name, profile=user, examples=examples[:20])
 

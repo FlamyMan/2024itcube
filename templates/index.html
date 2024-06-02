@@ -5,8 +5,10 @@
 {% block content %}
 
 <form action="" method="post" class="centered">
+    <p>
+    {{ problem_form.hidden_tag() }}
     Тип примера: 
-    <select name="type" id="problem_type" class="form-control">
+    <select name="problem_type" id="problem_type" class="form-control">
         <option value="calc">Вычисление</option>
         <option value="equation">Уравнение</option>
         <option value="inequality">Неравенство</option>
@@ -21,15 +23,20 @@
     <select name="additional" id="addition" class="form-control">
         <option value="no">Не выбрано</option>
     </select>
+    <input type="submit" value="Создать пример" class="btn btn-primary">
     </p>
+    
+</form>
 
 <form action="" method="post" class="centered">
     <dl>
-    {{ form.hidden_tag() }}
+    {{ problem_form.hidden_tag() }}
+    <input type="text" name="example_id" value="{{example}}" hidden>
+    <input type="text" hidden name="right_answer" value="{{right}}">
     <p>Ваш пример: {{ example }}</p>
-    {{ render_field(form.draft, class="form-control") }}
-    {{ render_field(form.answer, class="form-control") }}
-    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    {{ render_field(problem_form.draft, class="form-control") }}
+    {{ render_field(problem_form.answer, class="form-control") }}
+    <input type="submit" value="Готово" class="btn btn-primary">
     </dl>
     <script src="{{ url_for('static', filename='scripts/type_selection.js')}}"></script>
 </form>

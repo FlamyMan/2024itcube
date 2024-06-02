@@ -1,6 +1,6 @@
 import random
 # import sympy as sp
-from data.examples import Examples
+from data.examples import Example
 
 # constants
 opstring = "+-*/"
