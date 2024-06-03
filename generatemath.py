@@ -5,16 +5,48 @@ from data.examples import Examples
 # constants
 opstring = "+-*/"
 
-def generate_equation(radicalAmount: int, featureCount : int, xLimits : tuple = (0, 100), coefLimits : tuple = (0, 100), subXLimits : tuple = (1, 100)):
-   
+def radicalListToString(radicalList : list) -> str:
+    radicalList.reverse()
+    string = f"{radicalList[0][1]}"
+    print(radicalList)
+    lastPriority = 10000
+    for i in radicalList[1:]:
+        order = random.randint(0, 1)
+        if (type(i[1]) == list):
+            i[1] = radicalListToString[i[1]]
+        match i[0]:
+            case 0:
+                string = f"{string}+{i[1]}" if order else f"{i[1]}+{string}"
+                lastPriority = 0
+            case 1:
+                string = f"{string}-{i[1]}"
+                lastPriority = 0
+            case 2:
+                if lastPriority >= 1:
+                    string = f"{string}*{i[1]}" if order else f"{i[1]}*{string}"
+                else:
+                    string = f"({string})*{i[1]}" if order else f"{i[1]}({string})"
+                lastPriority = 1
+            case 3:
+                string = f"{string}/{i[1]}" if lastPriority >= 1 else f"({string})/{i[1]}"
+                lastPriority = 1
+    return string
+    
+
+def generate_equation(radicalAmount : int, featureToggles : list, xLimits : tuple = (0, 100), coefLimits : tuple = (0, 100), subXLimits : tuple = (1, 100)):
+
+    features = [i for i in range(len(featureToggles)) if featureToggles[i]]
+    print(features)
+
     x : int = random.randint(xLimits[0], xLimits[1])
     subX : int = x
     radicalList = []
     radicalNum = radicalAmount
     lastElem = -1
     while (radicalNum > 0):
+        print(f"New action, radically {radicalNum}")
         coefficient = random.randint(coefLimits[0], coefLimits[1])
-        action = random.randint(0, featureCount)
+        action = random.choice(features)
         match action:   # addition
             case 0:
                 if (subX < subXLimits[0]):  # we can't fucking subtract any more m8
@@ -66,31 +98,10 @@ def generate_equation(radicalAmount: int, featureCount : int, xLimits : tuple = 
         radicalList.append((action, coefficient)) 
         lastElem = coefficient
         radicalNum -= 1
+
+    radicalList.append((-1, subX))
     
-    problemStr = f"{subX}"
-    radicalList.reverse()
-    print(radicalList)
-    lastPriority = 10000
-    for i in radicalList:
-        order = random.randint(0, 1)
-        match i[0]:
-            case 0:
-                problemStr = f"{problemStr}+{i[1]}" if order else f"{i[1]}+{problemStr}"
-                lastPriority = 0
-            case 1:
-                problemStr = f"{problemStr}-{i[1]}"
-                lastPriority = 0
-            case 2:
-                if lastPriority >= 1:
-                    problemStr = f"{problemStr}*{i[1]}" if order else f"{i[1]}*{problemStr}"
-                else:
-                    problemStr = f"({problemStr})*{i[1]}" if order else f"{i[1]}({problemStr})"
-                lastPriority = 1
-            case 3:
-                problemStr = f"{problemStr}/{i[1]}" if lastPriority >= 1 else f"({problemStr})/{i[1]}"
-                lastPriority = 1
-    
-    return problemStr, x
+    return radicalListToString(radicalList), x
 
 if __name__ == "__main__":
-    print(generate_equation(5, 3))
+    print(generate_equation(5, (True, True, False, False)))
