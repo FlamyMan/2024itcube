@@ -7,14 +7,16 @@ opstring = "+-*/"
 
 def radicalListToString(radicalList : list) -> str:
     radicalList.reverse()
-    string = f"{radicalList[0][1]}"
-    print(radicalList)
+    string = ""
+    # print(radicalList)
     lastPriority = 10000
-    for i in radicalList[1:]:
+    for i in radicalList:
         order = random.randint(0, 1)
         if (type(i[1]) == list):
-            i[1] = radicalListToString[i[1]]
+            i[1] = f"({radicalListToString(i[1])})"
         match i[0]:
+            case -1:
+                string = f"{i[1]}"
             case 0:
                 string = f"{string}+{i[1]}" if order else f"{i[1]}+{string}"
                 lastPriority = 0
@@ -32,19 +34,31 @@ def radicalListToString(radicalList : list) -> str:
                 lastPriority = 1
     return string
     
+def linearizeRadicalList(radicalList : list, currentIndex : list = [0,]) -> list:
+    output = []
+    curIdx = currentIndex.copy()
+    for elem in radicalList:
+        if type(elem[1]) == int:
+            output.append([elem[0], elem[1], curIdx.copy()])
+        elif type(elem[1]) == list or type(elem[1]) == tuple:
+            tmpIdx = curIdx.copy()
+            tmpIdx.append(0)
+            output += linearizeRadicalList(elem[1], tmpIdx)
+        curIdx[-1] += 1
+    return output
 
-def generate_equation(radicalAmount : int, featureToggles : list, xLimits : tuple = (0, 100), coefLimits : tuple = (0, 100), subXLimits : tuple = (1, 100)):
+def generateEquationInternal(radicalAmount : int, featureToggles : list = (True, True, True, True), recursiveAmount : list = (0, 0), xLimits : tuple = (0, 100), coefLimits : tuple = (0, 100), subXLimits : tuple = (1, 100)):
 
     features = [i for i in range(len(featureToggles)) if featureToggles[i]]
-    print(features)
+    if len(features) == 0:
+        return
 
     x : int = random.randint(xLimits[0], xLimits[1])
     subX : int = x
     radicalList = []
-    radicalNum = radicalAmount
+    radicalNum = radicalAmount - 1
     lastElem = -1
     while (radicalNum > 0):
-        print(f"New action, radically {radicalNum}")
         coefficient = random.randint(coefLimits[0], coefLimits[1])
         action = random.choice(features)
         match action:   # addition
@@ -95,13 +109,32 @@ def generate_equation(radicalAmount : int, featureToggles : list, xLimits : tupl
                     continue
                 subX *= coefficient
             
-        radicalList.append((action, coefficient)) 
+        radicalList.append([action, coefficient]) 
         lastElem = coefficient
         radicalNum -= 1
 
-    radicalList.append((-1, subX))
+    for recurCounter in range (recursiveAmount[0]):
+        # print(f"A: {radicalList}")
+        linearRadicalList = linearizeRadicalList(radicalList)
+        oldExpr = random.choice(linearRadicalList)
+        # print(f"B: {oldExpr}")
+        newExpr = generateEquationInternal(recursiveAmount[1], featureToggles, (0, 0), (oldExpr[1], oldExpr[1]), coefLimits, subXLimits)
+        # print(f"C: {newExpr}")
+        listRef = radicalList
+        for i in oldExpr[2]:
+            listRef = listRef[i]
+            if len(listRef) == 2 and type(listRef[0]) == int and type(listRef[1]) == list:
+                listRef = listRef[1]
+            # print(f"L: {listRef}")
+        listRef[1] = newExpr[0]
+        # print(f"D: {radicalList}\n\n")
+        
+    radicalList.append([-1, subX])
     
-    return radicalListToString(radicalList), x
+    return radicalList, x
+
+def generateExpression(outputOfGEI : list) -> str:
+    return f"{radicalListToString(outputOfGEI[0])} = {outputOfGEI[1]}"
 
 if __name__ == "__main__":
-    print(generate_equation(5, (True, True, False, False)))
+    print(generateExpression(generateEquationInternal(5, (True, True, True, True), (3, 2))))
