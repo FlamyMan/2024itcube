@@ -11,8 +11,9 @@ class Example(SqlAlchemyBase):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"), nullable=True)
     example = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    example_type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     hardness = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-    status = sqlalchemy.Column(sqlalchemy.Boolean, nullable=True)
+    status = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     right = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
 

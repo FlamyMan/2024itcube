@@ -17,7 +17,7 @@ class User(SqlAlchemyBase, UserMixin):
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
 
-    examples = orm.relationship("Examples", back_populates="user")
+    examples = orm.relationship("Example", back_populates="user")
     def __repr__(self):
         return f'<User> {self.id} {self.name} {self.email}'
 

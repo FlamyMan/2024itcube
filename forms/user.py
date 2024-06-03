@@ -8,8 +8,7 @@ class RegisterForm(FlaskForm):
     name = StringField('Имя пользователя', 
                        validators=[
                            validators.DataRequired(),
-                           validators.Length(min=6, message="Минимальная длинна имени 6 символов"),
-                           validators.AnyOf(list("_")+list(string.ascii_uppercase)+list(string.digits), message="Можно использовать только буквы английского алфивита, цифры и нижнее подчеркивание")])
+                           validators.Length(min=6, message="Минимальная длинна имени 6 символов"),])
     email = EmailField('Электронная почта', validators=[validators.DataRequired()])
     password = PasswordField('Пароль', validators=[validators.DataRequired(), validators.EqualTo('password_again', message='Пароли не совпадают')])
     password_again = PasswordField('Повторите пароль')

@@ -9,19 +9,19 @@
     {{ problem_form.hidden_tag() }}
     Тип примера: 
     <select name="problem_type" id="problem_type" class="form-control">
-        <option value="calc">Вычисление</option>
+        <option value="calc" selected>Вычисление</option>
         <option value="equation">Уравнение</option>
         <option value="inequality">Неравенство</option>
     </select>
     Сложность: 
     <select name="hardness" id="hard_type" class="form-control">
         <option value="low">Легкий</option>
-        <option value="mid">Средний</option>
+        <option value="mid" selected>Средний</option>
         <option value="high">Сложный</option>
     </select>
     Доп. Параметры:
     <select name="additional" id="addition" class="form-control">
-        <option value="no">Не выбрано</option>
+        <option value="no" selected>Не выбрано</option>
     </select>
     <input type="submit" value="Создать пример" class="btn btn-primary">
     </p>
@@ -31,8 +31,7 @@
 <form action="" method="post" class="centered">
     <dl>
     {{ problem_form.hidden_tag() }}
-    <input type="text" name="example_id" value="{{example}}" hidden>
-    <input type="text" hidden name="right_answer" value="{{right}}">
+    <input type="text" name="example_id" value="{{ example_id }}" hidden>
     <p>Ваш пример: {{ example }}</p>
     {{ render_field(problem_form.draft, class="form-control") }}
     {{ render_field(problem_form.answer, class="form-control") }}

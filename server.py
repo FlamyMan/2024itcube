@@ -1,13 +1,17 @@
-from flask import Flask, render_template, redirect, request, abort
+from flask import Flask, render_template, redirect, request, abort, make_response
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from generatemath import generate_equation
-app = Flask(__name__)
+
+
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.secret_key = "my_secret_key"
 
 HARDNESS_TO_VAL = {"low": 0, "mid": 1, "high": 2}
+EXAMPLE_TYPE_TO_VAL = {"calc": 0, "equation": 1, "inequality": 2}
+STATUS_TO_VAL = {"not_finished": 0, "ok": 1, "filed": 2}
+
 
 from forms.user import LoginForm, RegisterForm
 from forms.example import ProblemForm
@@ -78,34 +82,78 @@ def login():
         return render_template('login.html', message="Не правильный логин или пароль.", form=form)
     return render_template('login.html', title='Вход', form=form)
 
-def generate_problem_by_settings(problem_type, hardness, additional, user_name: str=""):
+def generate_problem_by_settings(problem_type: int, hardness:int, additional: str, user_name: str=None) -> int:
     eq, right = generate_equation(3, 3) # temporarily 
     db_sess = db_session.create_session()
     if user_name:
-        user = db_sess.query(User).filter(User.name == user_name).first()
-    Example(
-        user_id = user.id,
+        userid = db_sess.query(User).filter(User.name == user_name).first().id
+    else:
+        userid = None
+    ex = Example(
+        user_id = userid,
         example = eq,
+        example_type = problem_type,
         hardness = hardness,
+        status = STATUS_TO_VAL["not_finished"],
         right = right
     )
+    db_sess.add(ex)
+    db_sess.commit()
+    id_sess = db_sess.query(Example).filter(Example.user_id == userid).filter(Example.example == eq).filter(Example.status == STATUS_TO_VAL["not_finished"]).first().id
+    return id_sess
+    
+def getExample(id: int, db_sess=None) -> Example:
+    if not db_sess:
+        db_sess = db_session.create_session()
+    return db_sess.query(Example).filter(Example.id == id).first()
 
+def user_to_null_or_name(user):
+    if user.is_authenticated:
+        return user.name
+    else:
+        return None
+    
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/index", methods=['GET', 'POST'])
 def index():
-    example_id = ""
+    example_id: int
+    example: Example
     answer_form = ProblemForm()
+    pr_type = int(request.cookies.get("P_TYPE", EXAMPLE_TYPE_TO_VAL["calc"]))
+    hardness = int(request.cookies.get("HARDNESS", HARDNESS_TO_VAL["mid"]))
+    additional = request.cookies.get("ADDITIONAL", "no")
+    last_ex_id = int(request.cookies.get("LAST_EXAMPLE_ID", 0))
+    last_answer = request.cookies.get("LAST_ANS", 0)
     if request.method == "POST":
         form = request.form.to_dict()
         print(form)
         if "problem_type" in form.keys(): # generate
-            if current_user.is_authenticated:
-                example, right = generate_problem_by_settings(form["problem_type"], HARDNESS_TO_VAL[form["hardness"]], form["additional"], user=current_user.name)
+            pr_type = EXAMPLE_TYPE_TO_VAL[form["problem_type"]]
+            hardness = HARDNESS_TO_VAL[form["hardness"]]
+            additional = form["additional"]
         elif "example_id" in form.keys(): # test problem
-            example = ""
-    else:
-        example, right = generate_equation(3, 3)
-    return render_template("index.html", title="Math website", example=example, problem_form=answer_form)
+            db_sess = db_session.create_session()
+            example_id = form["example_id"]
+            last_ex_id = example_id
+            example = getExample(example_id, db_sess=db_sess)
+            ans = form["answer"]
+            last_answer = ans
+            if example.right == ans:
+                example.status = STATUS_TO_VAL["ok"]
+            else:
+                example.status = STATUS_TO_VAL["filed"]
+            db_sess.commit()
+
+    example_id = generate_problem_by_settings(pr_type, hardness, additional, user_name=user_to_null_or_name(current_user))
+    example = getExample(example_id)
+    
+    kwargs = {"title":"Math website", "example_id": example_id, "example": example.example, "problem_form": answer_form}
+    res = make_response(render_template("index.html", **kwargs))
+    res.set_cookie('P_TYPE', str(pr_type))
+    res.set_cookie('HARDNESS', str(hardness))
+    res.set_cookie('ADDITIONAL', str(additional))
+    res.set_cookie('LAST_EXAMPLE_ID', str(last_ex_id))
+    return res
 
 @app.route('/delete')
 @login_required

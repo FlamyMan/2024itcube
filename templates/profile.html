@@ -16,14 +16,14 @@
     </thead>
     <tbody>
         {% for ex in examples %}
-        {% if ex.status %}
+        {% if ex.status == 1 %}
         <tr class="table-success">
             <td>{{ex.example}}</td>
             <td>{{ex.hardness}}</td>
             <td>Верно</td> 
             <td>{{ ex.date }}</td>
         </tr>
-        {% else %}
+        {% elif ex.status == 2 %}
         <tr class="table-danger">
             <td>{{ex.example}}</td>
             <td>{{ex.hardness}}</td>
