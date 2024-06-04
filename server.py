@@ -181,7 +181,7 @@ def profile(name: str):
     user = db_sess.query(User).filter(User.name == name).first()
     if not user:
         abort(404)
-    examples = db_sess.query(Example).filter(Example.user_id == user.id).all()
+    examples = db_sess.query(Example).filter(Example.user_id == user.id).filter(Example.status != 0).all()
     examples.sort(key=lambda x: x.date, reverse=True)
     return render_template("profile.html", title=user.name, profile=user, examples=examples[:20])
 
