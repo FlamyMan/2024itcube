@@ -1,6 +1,6 @@
 from flask import Flask, render_template, redirect, request, abort, make_response
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from generatemath import generate_equation
+from generatemath import generateExpression, generateEquationInternal, radicalListToString
 
 
 app = Flask(__name__)
@@ -83,7 +83,8 @@ def login():
     return render_template('login.html', title='Вход', form=form)
 
 def generate_problem_by_settings(problem_type: int, hardness:int, additional: str, user_name: str=None) -> int:
-    eq, right = generate_equation(3, 3) # temporarily 
+    eq_radicals, right = tuple(generateEquationInternal(5, (True, True, True, True), (3, 2))) # temporarily 
+    eq = radicalListToString(eq_radicals)
     db_sess = db_session.create_session()
     if user_name:
         userid = db_sess.query(User).filter(User.name == user_name).first().id
@@ -146,8 +147,8 @@ def index():
 
     example_id = generate_problem_by_settings(pr_type, hardness, additional, user_name=user_to_null_or_name(current_user))
     example = getExample(example_id)
-    
-    kwargs = {"title":"Math website", "example_id": example_id, "example": example.example, "problem_form": answer_form}
+    previous_example = getExample(last_ex_id)
+    kwargs = {"title":"Math website", "example_id": example_id, "example": example.example, "problem_form": answer_form, "previous_example":previous_example, "previous_answer": last_answer}
     res = make_response(render_template("index.html", **kwargs))
     res.set_cookie('P_TYPE', str(pr_type))
     res.set_cookie('HARDNESS', str(hardness))
