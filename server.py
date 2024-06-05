@@ -82,7 +82,7 @@ def login():
         return render_template('login.html', message="Не правильный логин или пароль.", form=form)
     return render_template('login.html', title='Вход', form=form)
 
-def generate_problem_by_settings(problem_type: int, hardness:int, additional: str, user_name: str=None) -> int:
+def generateProblemBySettings(problem_type: int, hardness:int, additional: str, user_name: str=None) -> int:
     eq_radicals, right = tuple(generateEquationInternal(5, (True, True, True, True), (3, 2))) # temporarily 
     eq = radicalListToString(eq_radicals)
     db_sess = db_session.create_session()
@@ -106,9 +106,10 @@ def generate_problem_by_settings(problem_type: int, hardness:int, additional: st
 def getExample(id: int, db_sess=None) -> Example:
     if not db_sess:
         db_sess = db_session.create_session()
-    return db_sess.query(Example).filter(Example.id == id).first()
+    out = db_sess.query(Example).filter(Example.id == id).first()
+    return out
 
-def user_to_null_or_name(user):
+def userToNullOrName(user):
     if user.is_authenticated:
         return user.name
     else:
@@ -124,36 +125,52 @@ def index():
     hardness = int(request.cookies.get("HARDNESS", HARDNESS_TO_VAL["mid"]))
     additional = request.cookies.get("ADDITIONAL", "no")
     last_ex_id = int(request.cookies.get("LAST_EXAMPLE_ID", 0))
-    last_answer = request.cookies.get("LAST_ANS", 0)
+    last_answer = request.cookies.get("LAST_ANS", -4065)
+    last_reward = float(request.cookies.get("LAST_REWARD", 0))
     if request.method == "POST":
         form = request.form.to_dict()
-        print(form)
         if "problem_type" in form.keys(): # generate
             pr_type = EXAMPLE_TYPE_TO_VAL[form["problem_type"]]
             hardness = HARDNESS_TO_VAL[form["hardness"]]
             additional = form["additional"]
-        elif "example_id" in form.keys(): # test problem
+        elif "example_id" in form.keys() and answer_form.validate_on_submit(): # test problem
+            print("testing")
             db_sess = db_session.create_session()
             example_id = form["example_id"]
             last_ex_id = example_id
             example = getExample(example_id, db_sess=db_sess)
             ans = form["answer"]
+            print(ans)
             last_answer = ans
             if example.right == ans:
                 example.status = STATUS_TO_VAL["ok"]
+                last_reward = 1
             else:
                 example.status = STATUS_TO_VAL["filed"]
+                last_reward = 0
+            user = db_sess.query(User).filter(User.id == current_user.id).first()
+            user.rating += last_reward
             db_sess.commit()
 
-    example_id = generate_problem_by_settings(pr_type, hardness, additional, user_name=user_to_null_or_name(current_user))
+    example_id = generateProblemBySettings(pr_type, hardness, additional, user_name=userToNullOrName(current_user))
     example = getExample(example_id)
     previous_example = getExample(last_ex_id)
-    kwargs = {"title":"Math website", "example_id": example_id, "example": example.example, "problem_form": answer_form, "previous_example":previous_example, "previous_answer": last_answer}
+    kwargs = {
+        "title":"Math website",
+        "example_id": example_id,
+        "example": example.example,
+        "problem_form": answer_form,
+        "pr_ex": previous_example,
+        "last_ans": last_answer,
+        "reward": last_reward
+        }
     res = make_response(render_template("index.html", **kwargs))
     res.set_cookie('P_TYPE', str(pr_type))
     res.set_cookie('HARDNESS', str(hardness))
     res.set_cookie('ADDITIONAL', str(additional))
     res.set_cookie('LAST_EXAMPLE_ID', str(last_ex_id))
+    res.set_cookie("LAST_ANS", last_answer)
+    res.set_cookie("LAST_REWARD", str(last_reward))
     return res
 
 @app.route('/delete')

@@ -39,4 +39,24 @@
     </dl>
     <script src="{{ url_for('static', filename='scripts/type_selection.js')}}"></script>
 </form>
+{% if pr_ex and last_ans != -4065%}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th scope="col">Предидущий пример</th>
+            <th scope="col">Ваш ответ</th>
+            <th scope="col">Правильный ответ</th>
+            <th scope="col">Награда</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ pr_ex.example }}</td>
+            <td>{{ last_ans }}</td>
+            <td>{{ pr_ex.right }}</td>
+            <td>{{ reward }}</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
 {% endblock %}
