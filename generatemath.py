@@ -1,4 +1,5 @@
-import random
+import random, math
+import time
 # import sympy as sp
 from data.examples import Example
 
@@ -47,7 +48,7 @@ def linearizeRadicalList(radicalList : list, currentIndex : list = [0,]) -> list
         curIdx[-1] += 1
     return output
 
-def generateEquationInternal(radicalAmount : int, featureToggles : list = (True, True, True, True), recursiveAmount : list = (0, 0), xLimits : tuple = (0, 100), coefLimits : tuple = (0, 100), subXLimits : tuple = (1, 100)):
+def generateExpressionInternal(radicalAmount : int, featureToggles : list = (True, True, True, True), recursiveAmount : list = (0, 0), xLimits : tuple = (0, 100), coefLimits : tuple = (0, 100), subXLimits : tuple = (0, 100)):
 
     features = [i for i in range(len(featureToggles)) if featureToggles[i]]
     if len(features) == 0:
@@ -67,7 +68,7 @@ def generateEquationInternal(radicalAmount : int, featureToggles : list = (True,
                     continue
                 while (subX - coefficient < subXLimits[0]):
                     coefficient = int(coefficient // random.uniform(0.4, 4))
-                if (coefficient == 0):
+                if (coefficient == 0 or subX - coefficient == 0):
                     continue
                 subX -= coefficient
             case 1: # subtraction
@@ -75,7 +76,7 @@ def generateEquationInternal(radicalAmount : int, featureToggles : list = (True,
                     continue
                 while (subX + coefficient > subXLimits[1]):
                     coefficient = int(coefficient // random.uniform(0.4, 4))
-                if (coefficient == 0):
+                if (coefficient == 0 or subX + coefficient == 0):
                     continue
                 subX += coefficient
             case 2: # multiplication
@@ -83,7 +84,7 @@ def generateEquationInternal(radicalAmount : int, featureToggles : list = (True,
                     continue
                 coefficients = []
                 for i in range(coefLimits[0], coefLimits[1]+1):
-                    if i == 0 or i == 1 or i == subX or i == lastElem or subX // i < subXLimits[0] or subX // i > subXLimits[1]:
+                    if i == 0 or i == 1 or i == subX or i == lastElem or subX // i < subXLimits[0] or subX // i > subXLimits[1] or subX // i == 0:
                         continue
                     if (subX % i == 0):
                         coefficients.append(i)
@@ -100,8 +101,8 @@ def generateEquationInternal(radicalAmount : int, featureToggles : list = (True,
                 if (subXLimits[1] / subX == 1 or subXLimits[1] / subX == 0):
                     continue
                 attCount = 0
-                while (coefficient > subXLimits[1] / subX or coefficient == 1 or coefficient == 0 or coefficient == subX):
-                    coefficient = random.randint(subXLimits[0], int(subXLimits[1] / subX))
+                while (coefficient > subXLimits[1] / subX or coefficient == 1 or coefficient == 0 or coefficient == subX or subX // coefficient == 0):
+                    coefficient = random.randint(min(0, max(coefLimits[0], int(subXLimits[0] / subX))), max(0, min(int(subXLimits[1] / subX), coefLimits[1])))
                     attCount += 1
                     if attCount > 20:
                         break    # fuck this shit
@@ -118,7 +119,7 @@ def generateEquationInternal(radicalAmount : int, featureToggles : list = (True,
         linearRadicalList = linearizeRadicalList(radicalList)
         oldExpr = random.choice(linearRadicalList)
         # print(f"B: {oldExpr}")
-        newExpr = generateEquationInternal(recursiveAmount[1], featureToggles, (0, 0), (oldExpr[1], oldExpr[1]), coefLimits, subXLimits)
+        newExpr = generateExpressionInternal(recursiveAmount[1], featureToggles, (0, 0), (oldExpr[1], oldExpr[1]), coefLimits, subXLimits)
         # print(f"C: {newExpr}")
         listRef = radicalList
         for i in oldExpr[2]:
@@ -133,8 +134,39 @@ def generateEquationInternal(radicalAmount : int, featureToggles : list = (True,
     
     return radicalList, x
 
-def generateExpression(outputOfGEI : list) -> str:
+def printExpression(outputOfGEI : list) -> str:
+    if len(outputOfGEI) == 0:
+        return
     return f"{radicalListToString(outputOfGEI[0])} = {outputOfGEI[1]}"
 
+def generateExpression(expressionType : int, difficulty : int, exponent : int, additionalSettings : list) -> tuple:
+    match (expressionType):
+        case 0:
+            # additional settings should be the feature toggles, checking that
+            if (len(additionalSettings) != 4 or difficulty < 0 or difficulty > 2):
+                return ()
+            
+            totalRadicalAmount = int(2.5 * (difficulty + random.random()) + 3)
+
+            configs = [(totalRadicalAmount, (0, 0))]
+            for i in range(1, totalRadicalAmount-1):
+                for j in [x for x in range(1, i) if i % x == 0]:
+                    configs.append((totalRadicalAmount - i, (j, (i // j)+1)))
+
+            radicalAmount, recurArgs = random.choice(configs)
+
+            negativeAllowed = exponent < 0
+            exponent = abs(exponent)
+            subXLimits = (0, 10**math.ceil(exponent)-1)
+            coefLImits = ((10**math.floor(exponent-1)), 10**math.ceil(exponent)-1)
+            xLimits = (-(10**math.ceil(exponent)) if negativeAllowed else (10**math.floor(exponent-1)), 10**math.ceil(exponent)-1)
+
+            return(generateExpressionInternal(radicalAmount, additionalSettings, recurArgs, xLimits, coefLImits, subXLimits))
+            
+
 if __name__ == "__main__":
-    print(generateExpression(generateEquationInternal(5, (True, True, True, True), (3, 2))))
+    for i in range (3*33):
+        timeA = time.time()
+        print(i, printExpression(generateExpression(0, i // 33, 4.3, (True, True, True, True))))
+        timeB = time.time()
+        print(f"Generated in {timeB-timeA} seconds.")
