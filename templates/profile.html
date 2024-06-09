@@ -11,7 +11,7 @@
             <th scope="col">Пример</th>
             <th scope="col">Сложность</th>
             <th scope="col">Статус</th>
-            <th scope="col">Дата</th>
+            <th scope="col">Время</th>
         </tr>
     </thead>
     <tbody>
@@ -21,14 +21,14 @@
             <td>{{ex.example}}</td>
             <td>{{ex.hardness}}</td>
             <td>Верно</td> 
-            <td>{{ ex.date }}</td>
+            <td>{{ ex.end_date - ex.create_date }}</td>
         </tr>
         {% elif ex.status == 2 %}
         <tr class="table-danger">
             <td>{{ex.example}}</td>
             <td>{{ex.hardness}}</td>
             <td>Не верно</td> 
-            <td>{{ ex.date }}</td>
+            <td>{{ ex.end_date - ex.create_date }}</td>
         </tr>
         {% endif %}
         {% endfor %}
