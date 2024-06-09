@@ -124,8 +124,9 @@ def cleanUpDB():
     b.delete()
     db_sess.commit()
 
-def getExample(id: int) -> Example:
-    db_sess = db_session.create_session()
+def getExample(id: int, db_sess=None) -> Example:
+    if not db_sess:
+        db_sess = db_session.create_session()
     out = db_sess.query(Example).filter(Example.id == id).first()
     return out
 
@@ -158,34 +159,36 @@ def index():
             db_sess = db_session.create_session()
             example_id = form["example_id"]
             last_ex_id = example_id
-            example = getExample(example_id)
-            example.end_date = datetime.datetime.now()
-            ans = form["answer"]
-            last_answer = ans
-            if example.right == ans:
-                example.status = STATUS_TO_VAL["ok"]
-                timeCoff: datetime.timedelta = example.end_date - example.create_date
-                if example.hardness == 0:
-                    last_reward = max((datetime.timedelta(minutes=2) - timeCoff).total_seconds() / 30, 1)
-                elif example.hardness == 0:
-                    last_reward = max((5 * datetime.timedelta(minutes=4) - timeCoff).total_seconds() / 30, 5)
-                elif example.hardness == 0:
-                    last_reward = max((10 * datetime.timedelta(minutes=4) - timeCoff).total_seconds() / 30, 10)
-                        
-            else:
-                example.status = STATUS_TO_VAL["filed"]
-                last_reward = 0
-            
-            if current_user.is_authenticated:
-                user = db_sess.query(User).filter(User.id == current_user.id).first()
-                user.rating += last_reward
-            db_sess.commit()
+            example = getExample(example_id, db_sess=db_sess)
+            if example.status == 0:
+                example.end_date = datetime.datetime.now()
+                ans = form["answer"]
+                last_answer = ans
+                if example.right == ans:
+                    example.status = STATUS_TO_VAL["ok"]
+                    timeCoff: datetime.timedelta = example.end_date - example.create_date
+                    
+                    if example.hardness == 0:
+                        last_reward = round(max((datetime.timedelta(minutes=2) - timeCoff).total_seconds() / 30, 1), 1)
+                    elif example.hardness == 1:
+                        last_reward = round(max((5 * (datetime.timedelta(minutes=4) - timeCoff).total_seconds() / 30), 5), 1)
+                    elif example.hardness == 2:
+                        last_reward = round(max((10 * (datetime.timedelta(minutes=4) - timeCoff).total_seconds() / 30), 10), 1)
+                            
+                else:
+                    example.status = STATUS_TO_VAL["filed"]
+                    last_reward = 0
+                
+                if current_user.is_authenticated:
+                    user = db_sess.query(User).filter(User.id == current_user.id).first()
+                    user.rating += last_reward
+                db_sess.commit()
 
     example_id = generateProblemBySettings(pr_type, hardness, additional, user_name=userToNullOrName(current_user))
     example = getExample(example_id)
     previous_example = getExample(last_ex_id)
     kwargs = {
-        "title":"Math website",
+        "title":"Математика",
         "example_id": example_id,
         "example": example.example,
         "problem_form": answer_form,
