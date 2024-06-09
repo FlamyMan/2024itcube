@@ -21,7 +21,6 @@ type.value = VAL_TO_PTYPE[cookies["P_TYPE"]];
 hard.value = VAL_TO_HARD[cookies["HARDNESS"]];
 render_additional();
 add.value = cookies["ADDITIONAL"];
-console.log(cookies["ADDITIONAL"]);
 function render_additional() {
     if (type.value == "calc") 
     {

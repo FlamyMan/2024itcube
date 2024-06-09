@@ -7,3 +7,8 @@ body
 {
     color:white;
 }
+.form-control
+{
+    background-color:black;
+    color: white
+}

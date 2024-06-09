@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, request, abort, make_respons
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from generatemath import generateExpression, radicalListToString
 import datetime
+import math
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -84,16 +85,15 @@ def login():
 
 def generateProblemBySettings(problem_type: int, hardness:int, additional: str, user_name: str=None) -> int:
     
-    match(hardness):
-        case 0:
-            hard = 0.5
-            exp = 2
-        case 1:
-            hard = 1
-            exp = 2.5
-        case 2:
-            hard = 2
-            exp = 3
+    if hardness == 0:
+        hard = 0.5
+        exp = 2
+    elif hardness == 1:
+        hard = 1
+        exp = 2.5
+    elif hardness == 2:
+        hard = 2
+        exp = 3
     eq_radicals, right = generateExpression(problem_type, hard, exp, (True, True, True, True)) # temporarily 
     eq = radicalListToString(eq_radicals)
     db_sess = db_session.create_session()
@@ -116,13 +116,16 @@ def generateProblemBySettings(problem_type: int, hardness:int, additional: str, 
     
 def cleanUpDB():
     db_sess = db_session.create_session()
-    db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.end_date == None).delete()
-    db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.user_id == None).delete()
+    a = db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.end_date == None, Example.status == 0)
+    b = db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.user_id == None)
+    
+    print(a, b)
+    a.delete()
+    b.delete()
     db_sess.commit()
 
-def getExample(id: int, db_sess=None) -> Example:
-    if not db_sess:
-        db_sess = db_session.create_session()
+def getExample(id: int) -> Example:
+    db_sess = db_session.create_session()
     out = db_sess.query(Example).filter(Example.id == id).first()
     return out
 
@@ -135,7 +138,7 @@ def userToNullOrName(user):
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/index", methods=['GET', 'POST'])
 def index():
-    cleanUpDB()
+    # cleanUpDB()
     example_id: int
     example: Example
     answer_form = ProblemForm()
@@ -152,23 +155,30 @@ def index():
             hardness = HARDNESS_TO_VAL[form["hardness"]]
             additional = form["additional"]
         elif "example_id" in form.keys() and answer_form.validate_on_submit(): # test problem
-            print("testing")
             db_sess = db_session.create_session()
             example_id = form["example_id"]
             last_ex_id = example_id
-            example = getExample(example_id, db_sess=db_sess)
+            example = getExample(example_id)
+            example.end_date = datetime.datetime.now()
             ans = form["answer"]
-            print(ans)
             last_answer = ans
             if example.right == ans:
                 example.status = STATUS_TO_VAL["ok"]
-                last_reward = 1
+                timeCoff: datetime.timedelta = example.end_date - example.create_date
+                if example.hardness == 0:
+                    last_reward = max((datetime.timedelta(minutes=2) - timeCoff).total_seconds() / 30, 1)
+                elif example.hardness == 0:
+                    last_reward = max((5 * datetime.timedelta(minutes=4) - timeCoff).total_seconds() / 30, 5)
+                elif example.hardness == 0:
+                    last_reward = max((10 * datetime.timedelta(minutes=4) - timeCoff).total_seconds() / 30, 10)
+                        
             else:
                 example.status = STATUS_TO_VAL["filed"]
                 last_reward = 0
-            example.end_date = datetime.datetime.now()
-            user = db_sess.query(User).filter(User.id == current_user.id).first()
-            user.rating += last_reward
+            
+            if current_user.is_authenticated:
+                user = db_sess.query(User).filter(User.id == current_user.id).first()
+                user.rating += last_reward
             db_sess.commit()
 
     example_id = generateProblemBySettings(pr_type, hardness, additional, user_name=userToNullOrName(current_user))
