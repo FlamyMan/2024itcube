@@ -12,7 +12,13 @@ app.secret_key = "my_secret_key"
 HARDNESS_TO_VAL = {"low": 0, "mid": 1, "high": 2}
 EXAMPLE_TYPE_TO_VAL = {"calc": 0, "equation": 1, "inequality": 2}
 STATUS_TO_VAL = {"not_finished": 0, "ok": 1, "filed": 2}
-
+ADDITIONAL_TO_VAL = {
+    "no": (True, True, True, True),
+    "plus": (True, False, False, False),
+    "minus": (False, True, False, False),
+    "multi": (False, False, True, False),
+    "division": (False, False, False, True),
+}
 
 from forms.user import LoginForm, RegisterForm
 from forms.example import ProblemForm
@@ -84,17 +90,18 @@ def login():
     return render_template('login.html', title='Вход', form=form)
 
 def generateProblemBySettings(problem_type: int, hardness:int, additional: str, user_name: str=None) -> int:
-    
+    problem_type = 0
     if hardness == 0:
         hard = 0.5
         exp = 2
     elif hardness == 1:
         hard = 1
-        exp = 2.5
+        exp = 2.3
     elif hardness == 2:
-        hard = 2
+        hard = 1.5
         exp = 3
-    eq_radicals, right = generateExpression(problem_type, hard, exp, (True, True, True, True)) # temporarily 
+    
+    eq_radicals, right = generateExpression(problem_type, hard, exp, ADDITIONAL_TO_VAL[additional]) # temporarily 
     eq = radicalListToString(eq_radicals)
     db_sess = db_session.create_session()
     if user_name:
