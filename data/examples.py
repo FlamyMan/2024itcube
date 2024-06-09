@@ -15,7 +15,8 @@ class Example(SqlAlchemyBase):
     hardness = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     status = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     right = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-    date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
+    create_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
+    end_date = sqlalchemy.Column(sqlalchemy.DateTime)
 
     user = orm.relationship('User')
 

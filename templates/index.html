@@ -23,7 +23,7 @@
     <select name="additional" id="addition" class="form-control">
         <option value="no" selected>Не выбрано</option>
     </select>
-    <input type="submit" value="Создать пример" class="btn btn-primary">
+    <input type="submit" value="Создать пример(Пропустить текущий пример)" class="btn btn-primary">
     </p>
     
 </form>
@@ -32,14 +32,14 @@
     <dl>
     {{ problem_form.hidden_tag() }}
     <input type="text" name="example_id" value="{{ example_id }}" hidden>
-    <p>Ваш пример: {{ example }}</p>
+    <p>Ваш пример: <h3>{{ example }}</h3></p>
     {{ render_field(problem_form.draft, class="form-control") }}
     {{ render_field(problem_form.answer, class="form-control") }}
     <input type="submit" value="Готово" class="btn btn-primary">
     </dl>
     <script src="{{ url_for('static', filename='scripts/type_selection.js')}}"></script>
 </form>
-{% if pr_ex and last_ans != -4065%}
+{% if pr_ex and last_ans != "-4065" %}
 <table class="table table-hover">
     <thead>
         <tr>

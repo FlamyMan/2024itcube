@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, request, abort, make_response
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from generatemath import generateExpression, generateEquationInternal, radicalListToString
-
+from generatemath import generateExpression, radicalListToString
+import datetime
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -83,7 +83,18 @@ def login():
     return render_template('login.html', title='Вход', form=form)
 
 def generateProblemBySettings(problem_type: int, hardness:int, additional: str, user_name: str=None) -> int:
-    eq_radicals, right = tuple(generateEquationInternal(5, (True, True, True, True), (3, 2))) # temporarily 
+    
+    match(hardness):
+        case 0:
+            hard = 0.5
+            exp = 2
+        case 1:
+            hard = 1
+            exp = 2.5
+        case 2:
+            hard = 2
+            exp = 3
+    eq_radicals, right = generateExpression(problem_type, hard, exp, (True, True, True, True)) # temporarily 
     eq = radicalListToString(eq_radicals)
     db_sess = db_session.create_session()
     if user_name:
@@ -103,6 +114,12 @@ def generateProblemBySettings(problem_type: int, hardness:int, additional: str, 
     id_sess = db_sess.query(Example).filter(Example.user_id == userid).filter(Example.example == eq).filter(Example.status == STATUS_TO_VAL["not_finished"]).first().id
     return id_sess
     
+def cleanUpDB():
+    db_sess = db_session.create_session()
+    db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.end_date == None).delete()
+    db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.user_id == None).delete()
+    db_sess.commit()
+
 def getExample(id: int, db_sess=None) -> Example:
     if not db_sess:
         db_sess = db_session.create_session()
@@ -118,6 +135,7 @@ def userToNullOrName(user):
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/index", methods=['GET', 'POST'])
 def index():
+    cleanUpDB()
     example_id: int
     example: Example
     answer_form = ProblemForm()
@@ -125,7 +143,7 @@ def index():
     hardness = int(request.cookies.get("HARDNESS", HARDNESS_TO_VAL["mid"]))
     additional = request.cookies.get("ADDITIONAL", "no")
     last_ex_id = int(request.cookies.get("LAST_EXAMPLE_ID", 0))
-    last_answer = request.cookies.get("LAST_ANS", -4065)
+    last_answer = request.cookies.get("LAST_ANS", "-4065")
     last_reward = float(request.cookies.get("LAST_REWARD", 0))
     if request.method == "POST":
         form = request.form.to_dict()
@@ -148,6 +166,7 @@ def index():
             else:
                 example.status = STATUS_TO_VAL["filed"]
                 last_reward = 0
+            example.end_date = datetime.datetime.now()
             user = db_sess.query(User).filter(User.id == current_user.id).first()
             user.rating += last_reward
             db_sess.commit()
@@ -169,7 +188,7 @@ def index():
     res.set_cookie('HARDNESS', str(hardness))
     res.set_cookie('ADDITIONAL', str(additional))
     res.set_cookie('LAST_EXAMPLE_ID', str(last_ex_id))
-    res.set_cookie("LAST_ANS", last_answer)
+    res.set_cookie("LAST_ANS", str(last_answer))
     res.set_cookie("LAST_REWARD", str(last_reward))
     return res
 
@@ -199,7 +218,7 @@ def profile(name: str):
     if not user:
         abort(404)
     examples = db_sess.query(Example).filter(Example.user_id == user.id).filter(Example.status != 0).all()
-    examples.sort(key=lambda x: x.date, reverse=True)
+    examples.sort(key=lambda x: x.create_date, reverse=True)
     return render_template("profile.html", title=user.name, profile=user, examples=examples[:20])
 
 def main():
