@@ -64,7 +64,7 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
         action = random.choice(features)
         match action:   # addition
             case 0:
-                if (subX < subXLimits[0]):  # we can't fucking subtract any more m8
+                if (subX < subXLimits[0]):  # we can't ****ing subtract any more m8
                     continue
                 while (subX - coefficient < subXLimits[0]):
                     coefficient = int(coefficient // random.uniform(0.4, 4))
@@ -72,7 +72,7 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
                     continue
                 subX -= coefficient
             case 1: # subtraction
-                if (subX > subXLimits[1]):  # we can't fucking add any more m8
+                if (subX > subXLimits[1]):  # we can't ****ing add any more m8
                     continue
                 while (subX + coefficient > subXLimits[1]):
                     coefficient = int(coefficient // random.uniform(0.4, 4))
@@ -80,7 +80,7 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
                     continue
                 subX += coefficient
             case 2: # multiplication
-                if (subX < subXLimits[0]):  # we can't fucking divide any more m8
+                if (subX < subXLimits[0]):  # we can't ****ing divide any more m8
                     continue
                 coefficients = []
                 for i in range(coefLimits[0], coefLimits[1]+1):
@@ -95,7 +95,7 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
                 coefficient = coefficients[diff]
                 subX = int(subX // coefficient)
             case 3: # division
-                if (subX > subXLimits[1] or subX == 0 or subX == 1):  # we can't fucking multiply any more m8
+                if (subX > subXLimits[1] or subX == 0 or subX == 1):  # we can't ****ing multiply any more m8
                     continue
                 # the coefficient gotta stay below (subXLimits[1] / subX)
                 if (subXLimits[1] / subX == 1 or subXLimits[1] / subX == 0):
@@ -105,7 +105,7 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
                     coefficient = random.randint(min(0, max(coefLimits[0], int(subXLimits[0] / subX))), max(0, min(int(subXLimits[1] / subX), coefLimits[1])))
                     attCount += 1
                     if attCount > 20:
-                        break    # fuck this shit
+                        break    # **** this shit
                 if attCount > 20:
                     continue
                 subX *= coefficient
