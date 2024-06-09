@@ -2,7 +2,6 @@ from flask import Flask, render_template, redirect, request, abort, make_respons
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from generatemath import generateExpression, radicalListToString
 import datetime
-import math
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -180,7 +179,7 @@ def index():
                     elif example.hardness == 1:
                         last_reward = round(max((5 * (datetime.timedelta(minutes=4) - timeCoff).total_seconds() / 30), 5), 1)
                     elif example.hardness == 2:
-                        last_reward = round(max((10 * (datetime.timedelta(minutes=4) - timeCoff).total_seconds() / 30), 10), 1)
+                        last_reward = round(max((10 * (datetime.timedelta(minutes=8) - timeCoff).total_seconds() / 30), 10), 1)
                             
                 else:
                     example.status = STATUS_TO_VAL["filed"]
