@@ -122,12 +122,8 @@ def generateProblemBySettings(problem_type: int, hardness:int, additional: str, 
     
 def cleanUpDB():
     db_sess = db_session.create_session()
-    a = db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.end_date == None, Example.status == 0)
-    b = db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.user_id == None)
-    
-    print(a, b)
-    a.delete()
-    b.delete()
+    db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.end_date == None, Example.status == 0).delete()
+    db_sess.query(Example).filter(Example.create_date < (datetime.datetime.now() - datetime.timedelta(days=1)), Example.user_id == None).delete()
     db_sess.commit()
 
 def getExample(id: int, db_sess=None) -> Example:
@@ -145,7 +141,7 @@ def userToNullOrName(user):
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/index", methods=['GET', 'POST'])
 def index():
-    # cleanUpDB()
+    cleanUpDB()
     example_id: int
     example: Example
     answer_form = ProblemForm()
