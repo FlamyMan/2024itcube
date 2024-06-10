@@ -1,4 +1,4 @@
-const CALC = '<option value="no" >Не выбрано</option><option value="plus">Только +</option><option value="minus">Только -</option><option value="multi">Только *</option><option value="division">Только /</option>';
+const CALC = '<option value="no" >Не выбрано</option><option value="plus">Только +</option><option value="minus">Только -</option><option value="addsub">Только + и -</option><option value="muldiv">Только * и /</option>';
 const EQUATION = '<option value="no" >Не выбрано</option><option value="squared">Только ax^2+bx+c</option><option value="lin">Только kx+b</option>';
 
 const VAL_TO_PTYPE = ['calc', 'equation', 'inequality']
@@ -28,6 +28,7 @@ function render_additional() {
     }
     else
     {
-        add.innerHTML = EQUATION;
+        // add.innerHTML = EQUATION;
+        add.innerHTML = CALC;
     }
 }

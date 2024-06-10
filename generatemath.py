@@ -48,7 +48,9 @@ def linearizeRadicalList(radicalList : list, currentIndex : list = [0,]) -> list
         curIdx[-1] += 1
     return output
 
-def generateExpressionInternal(radicalAmount : int, featureToggles : list = (True, True, True, True), recursiveAmount : list = (0, 0), xLimits : tuple = (0, 100), coefLimits : tuple = (0, 100), subXLimits : tuple = (0, 100)):
+def generateExpressionInternal(radicalAmount : int, featureToggles : list = (True, True, True, True), recursiveAmount : list = (0, 0), equationMode : bool = False, xLimits : tuple = (0, 100), coefLimits : tuple = (0, 100), subXLimits : tuple = (0, 100)):
+
+    initTime = time.time_ns()
 
     features = [i for i in range(len(featureToggles)) if featureToggles[i]]
     if len(features) == 0:
@@ -59,12 +61,12 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
     radicalList = []
     radicalNum = radicalAmount - 1
     lastElem = -1
-    while (radicalNum > 0):
+    while (radicalNum > 0 and time.time_ns() - initTime < 500000000):
         coefficient = random.randint(coefLimits[0], coefLimits[1])
         action = random.choice(features)
         match action:   # addition
             case 0:
-                if (subX < subXLimits[0]):  # we can't ****ing subtract any more m8
+                if (subX < subXLimits[0]):  # we straight up can't subtract any more m8
                     continue
                 while (subX - coefficient < subXLimits[0]):
                     coefficient = int(coefficient // random.uniform(0.4, 4))
@@ -72,7 +74,7 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
                     continue
                 subX -= coefficient
             case 1: # subtraction
-                if (subX > subXLimits[1]):  # we can't ****ing add any more m8
+                if (subX > subXLimits[1]):  # we straight up can't add any more m8
                     continue
                 while (subX + coefficient > subXLimits[1]):
                     coefficient = int(coefficient // random.uniform(0.4, 4))
@@ -80,7 +82,7 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
                     continue
                 subX += coefficient
             case 2: # multiplication
-                if (subX < subXLimits[0]):  # we can't ****ing divide any more m8
+                if (subX < subXLimits[0]):  # we straight up can't divide any more m8
                     continue
                 coefficients = []
                 for i in range(coefLimits[0], coefLimits[1]+1):
@@ -95,7 +97,7 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
                 coefficient = coefficients[diff]
                 subX = int(subX // coefficient)
             case 3: # division
-                if (subX > subXLimits[1] or subX == 0 or subX == 1):  # we can't ****ing multiply any more m8
+                if (subX > subXLimits[1] or subX == 0 or subX == 1):  # we straight up can't multiply any more m8
                     continue
                 # the coefficient gotta stay below (subXLimits[1] / subX)
                 if (subXLimits[1] / subX == 1 or subXLimits[1] / subX == 0):
@@ -105,7 +107,7 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
                     coefficient = random.randint(min(0, max(coefLimits[0], int(subXLimits[0] / subX))), max(0, min(int(subXLimits[1] / subX), coefLimits[1])))
                     attCount += 1
                     if attCount > 20:
-                        break    # **** this shit
+                        break    # screw this
                 if attCount > 20:
                     continue
                 subX *= coefficient
@@ -117,9 +119,11 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
     for recurCounter in range (recursiveAmount[0]):
         # print(f"A: {radicalList}")
         linearRadicalList = linearizeRadicalList(radicalList)
+        if len(linearRadicalList) == 0:
+            return [], -1, -1
         oldExpr = random.choice(linearRadicalList)
         # print(f"B: {oldExpr}")
-        newExpr = generateExpressionInternal(recursiveAmount[1], featureToggles, (0, 0), (oldExpr[1], oldExpr[1]), coefLimits, subXLimits)
+        newExpr = generateExpressionInternal(recursiveAmount[1], featureToggles, (0, 0), False, (oldExpr[1], oldExpr[1]), coefLimits, subXLimits)
         # print(f"C: {newExpr}")
         listRef = radicalList
         for i in oldExpr[2]:
@@ -130,38 +134,52 @@ def generateExpressionInternal(radicalAmount : int, featureToggles : list = (Tru
         listRef[1] = newExpr[0]
         # print(f"D: {radicalList}\n\n")
         
-    radicalList.append([-1, subX])
-    
-    return radicalList, x
+    if equationMode:
+        radicalList.append([-1, "x"])
+    else:
+        radicalList.append([-1, subX])
+    return radicalList, x, subX
 
-def printExpression(outputOfGEI : list) -> str:
-    if len(outputOfGEI) == 0:
-        return
-    return f"{radicalListToString(outputOfGEI[0])} = {outputOfGEI[1]}"
+def generateExpressionLessInternal(radicalAmount : int, featureToggles : list = (True, True, True, True), recursiveAmount : list = (0, 0), equationMode : bool = False, xLimits : tuple = (0, 100), coefLimits : tuple = (0, 100), subXLimits : tuple = (0, 100)):
+    radicalList, x, subX = generateExpressionInternal(radicalAmount, featureToggles, recursiveAmount, equationMode, xLimits, coefLimits, subXLimits)
+    if equationMode:
+        return len(radicalList), f"{radicalListToString(radicalList)} = {x}", subX
+    else:
+        return len(radicalList), radicalListToString(radicalList), x
 
-def generateExpression(expressionType : int, difficulty : int, exponent : int, additionalSettings : list) -> tuple:
-    match (expressionType):
-        case 0:
-            # additional settings should be the feature toggles, checking that
-            if (len(additionalSettings) != 4 or difficulty < 0 or difficulty > 2):
-                return ()
-            
-            totalRadicalAmount = int(2.5 * (difficulty + random.random()) + 3)
 
-            configs = [(totalRadicalAmount, (0, 0))]
-            for i in range(1, totalRadicalAmount-1):
-                for j in [x for x in range(1, i) if i % x == 0]:
-                    configs.append((totalRadicalAmount - i, (j, (i // j)+1)))
+def generateExpression(expressionType : int, difficulty : float, exponent : int, additionalSettings : list) -> tuple:
+    if (expressionType == 0 or expressionType == 1):
+        # additional settings should be the feature toggles, checking that
+        if (len(additionalSettings) != 4 or difficulty < 0 or difficulty > 2):
+            return ()
+        
+        totalRadicalAmount = int(2.5 * (difficulty + random.random()) + 3)
+        minRadicalAmount = int(2.5 * (difficulty + 0) + 3)
+        maxRadicalAmount = int(2.5 * (difficulty + 1) + 3)
 
+        configs = [(totalRadicalAmount, (0, 0))]
+        for i in range(1, totalRadicalAmount-1):
+            for j in [x for x in range(1, i) if i % x == 0]:
+                configs.append((totalRadicalAmount - i, (j, (i // j)+1)))
+
+        negativeAllowed = exponent < 0
+        exponent = abs(exponent)
+        subXLimits = (0, 10**math.ceil(exponent)-1)
+        coefLImits = ((10**math.floor(exponent-1)), 10**math.ceil(exponent)-1)
+        xLimits = (-(10**math.ceil(exponent)) if negativeAllowed else (10**math.floor(exponent-1)), 10**math.ceil(exponent)-1)
+        equationMode = expressionType == 1
+
+        curRadAmount = -1
+
+        while (curRadAmount < minRadicalAmount or curRadAmount > maxRadicalAmount): # protection from hanging
             radicalAmount, recurArgs = random.choice(configs)
 
-            negativeAllowed = exponent < 0
-            exponent = abs(exponent)
-            subXLimits = (0, 10**math.ceil(exponent)-1)
-            coefLImits = ((10**math.floor(exponent-1)), 10**math.ceil(exponent)-1)
-            xLimits = (-(10**math.ceil(exponent)) if negativeAllowed else (10**math.floor(exponent-1)), 10**math.ceil(exponent)-1)
-
-            return(generateExpressionInternal(radicalAmount, additionalSettings, recurArgs, xLimits, coefLImits, subXLimits))
+            return_val = generateExpressionLessInternal(radicalAmount, additionalSettings, recurArgs, equationMode, xLimits, coefLImits, subXLimits)
+            curRadAmount = return_val[0]
+            return_val = return_val[1:]
+        
+        return return_val
             
 
 if __name__ == "__main__":

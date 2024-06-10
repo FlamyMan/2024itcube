@@ -15,8 +15,8 @@ ADDITIONAL_TO_VAL = {
     "no": (True, True, True, True),
     "plus": (True, False, False, False),
     "minus": (False, True, False, False),
-    "multi": (False, False, True, False),
-    "division": (False, False, False, True),
+    "addsub": (True, True, False, False),
+    "muldiv": (False, False, True, True),
 }
 
 from forms.user import LoginForm, RegisterForm
@@ -89,7 +89,7 @@ def login():
     return render_template('login.html', title='Вход', form=form)
 
 def generateProblemBySettings(problem_type: int, hardness:int, additional: str, user_name: str=None) -> int:
-    problem_type = 0
+    problem_type = max(min(problem_type, 1), 0)
     if hardness == 0:
         hard = 0.5
         exp = 2
@@ -100,8 +100,7 @@ def generateProblemBySettings(problem_type: int, hardness:int, additional: str, 
         hard = 1.5
         exp = 3
     
-    eq_radicals, right = generateExpression(problem_type, hard, exp, ADDITIONAL_TO_VAL[additional]) # temporarily 
-    eq = radicalListToString(eq_radicals)
+    eq, answer = generateExpression(problem_type, hard, exp, ADDITIONAL_TO_VAL[additional]) # temporarily 
     db_sess = db_session.create_session()
     if user_name:
         userid = db_sess.query(User).filter(User.name == user_name).first().id
@@ -113,7 +112,7 @@ def generateProblemBySettings(problem_type: int, hardness:int, additional: str, 
         example_type = problem_type,
         hardness = hardness,
         status = STATUS_TO_VAL["not_finished"],
-        right = right
+        right = answer
     )
     db_sess.add(ex)
     db_sess.commit()
