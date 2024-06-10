@@ -19,14 +19,14 @@
         {% if ex.status == 1 %}
         <tr class="table-success">
             <td>{{ex.example}}</td>
-            <td>{{ex.hardness}}</td>
+            <td>{{htw[ex.hardness]}}</td>
             <td>Верно</td> 
             <td>{{ ex.end_date - ex.create_date }}</td>
         </tr>
         {% elif ex.status == 2 %}
         <tr class="table-danger">
             <td>{{ex.example}}</td>
-            <td>{{ex.hardness}}</td>
+            <td>{{htw[ex.hardness]}}</td>
             <td>Не верно</td> 
             <td>{{ ex.end_date - ex.create_date }}</td>
         </tr>

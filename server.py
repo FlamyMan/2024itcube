@@ -9,6 +9,7 @@ login_manager.init_app(app)
 app.secret_key = "my_secret_key"
 
 HARDNESS_TO_VAL = {"low": 0, "mid": 1, "high": 2}
+HARD_TO_WORD = {0: "Легкая", 1: "Средняя", 2: "Сложная"}
 EXAMPLE_TYPE_TO_VAL = {"calc": 0, "equation": 1, "inequality": 2}
 STATUS_TO_VAL = {"not_finished": 0, "ok": 1, "filed": 2}
 ADDITIONAL_TO_VAL = {
@@ -233,7 +234,7 @@ def profile(name: str):
         abort(404)
     examples = db_sess.query(Example).filter(Example.user_id == user.id).filter(Example.status != 0).all()
     examples.sort(key=lambda x: x.create_date, reverse=True)
-    return render_template("profile.html", title=user.name, profile=user, examples=examples[:20])
+    return render_template("profile.html", title=user.name, profile=user, examples=examples[:20], htw=HARD_TO_WORD)
 
 def main():
     db_session.global_init("db/dataBase.db")
